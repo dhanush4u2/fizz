@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { AlertCircle, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { AlertCircle, ArrowUp, ArrowDown, Minus, Plus } from 'lucide-react';
+import { CreateIssueDialog } from '@/components/issue/CreateIssueDialog';
+import { IssueDetailSheet } from '@/components/issue/IssueDetailSheet';
 
 interface Issue {
   id: string;
@@ -35,6 +38,9 @@ export default function Board() {
   const { user } = useAuth();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [showDetailSheet, setShowDetailSheet] = useState(false);
 
   useEffect(() => {
     loadIssues();
@@ -66,13 +72,24 @@ export default function Board() {
     return <div className="flex items-center justify-center h-full">Loading...</div>;
   }
 
+  const handleIssueClick = (issueId: string) => {
+    setSelectedIssueId(issueId);
+    setShowDetailSheet(true);
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Board</h1>
-        <p className="text-muted-foreground mt-2">
-          Track and manage your team's work
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Board</h1>
+          <p className="text-muted-foreground mt-2">
+            Track and manage your team's work
+          </p>
+        </div>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Issue
+        </Button>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
@@ -102,6 +119,7 @@ export default function Board() {
                     <Card
                       key={issue.id}
                       className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleIssueClick(issue.id)}
                     >
                       <CardContent className="p-4">
                         <div className="space-y-3">
@@ -140,6 +158,19 @@ export default function Board() {
           );
         })}
       </div>
+
+      <CreateIssueDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog}
+        onSuccess={loadIssues}
+      />
+
+      <IssueDetailSheet
+        issueId={selectedIssueId}
+        open={showDetailSheet}
+        onOpenChange={setShowDetailSheet}
+        onUpdate={loadIssues}
+      />
     </div>
   );
 }
