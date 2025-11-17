@@ -1,73 +1,84 @@
-# Welcome to your Lovable project
+# Fizz
 
-## Project info
+Fizz is a lightweight Jira-like agile workspace prototype. It supports organizations, projects, sprints/spikes, issues, subtasks, boards, backlogs, calendars, timelines, forms, goals, and tight GitHub + Vercel integration.
 
-**URL**: https://lovable.dev/projects/0829b945-1ed6-49fe-885d-a62be79bb77e
+---
 
-## How can I edit this code?
+## Features
+- Create & manage **organizations** (owner/CEO invites members)
+- **Projects → Sprints → Issues** (task, story, bug, epic, subtask, spike)
+- **Nested subtasks** (max 2 levels)
+- **Multiple assignees**, watchers, labels, priority levels
+- **Kanban board** with drag-and-drop + WIP limits
+- **Backlog** reorder, sprint planning
+- **Calendar** and **timeline** (Gantt-like) views
+- **Goals** and **custom forms**
+- **GitHub integration**: branch → issue linking, PR events update issue status
+- **Vercel integration**: preview URLs auto-attached to issues
+- Webhooks, OAuth, real-time board updates
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## Repository Structure
+/fizz
+/backend # API, DB, webhooks
+/frontend # React + Vite UI
+docker-compose.yml
+lovable-prompt.json
+README.md
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0829b945-1ed6-49fe-885d-a62be79bb77e) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## Requirements
+- Node.js 18+
+- npm / pnpm / yarn
+- PostgreSQL 13+
+- Git
+- (Optional) Docker for DB
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Environment Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### backend/.env
+NODE_ENV=development
+PORT=4000
+DATABASE_URL=postgres://fizz_user:password@localhost:5432/fizz_dev
+JWT_SECRET=super-secret-jwt-key
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+GITHUB_OAUTH_CALLBACK_URL=http://localhost:4000/auth/github/callback
 
-Follow these steps:
+WEBHOOK_SECRET=your-webhook-secret
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### frontend/.env
+VITE_API_URL=http://localhost:4000/api
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+VITE_GITHUB_OAUTH_URL=https://github.com/login/oauth/authorize?client_id=your_github_client_id
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## Quick Start
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/yourusername/fizz.git
+cd fizz
+docker-compose up -d
+cd backend
+npm install
+npm run dev
+cd frontend
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Troubleshooting
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+OAuth redirect errors → check GitHub callback URL
 
-**Use GitHub Codespaces**
+Missing previews → ensure Vercel webhook includes meta.branch
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Webhook signature invalid → verify WEBHOOK_SECRET
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/0829b945-1ed6-49fe-885d-a62be79bb77e) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+DB connection errors → ensure Postgres is running & DATABASE_URL is correct
