@@ -5,6 +5,9 @@ import { Plus, Users, FolderKanban, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { CreateOrgDialog } from '@/components/org/CreateOrgDialog';
+import { CreateProjectDialog } from '@/components/project/CreateProjectDialog';
+import { CreateIssueDialog } from '@/components/issue/CreateIssueDialog';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -14,27 +17,41 @@ export default function Dashboard() {
     activeIssues: 0,
     completedIssues: 0,
   });
+  const [hasOrg, setHasOrg] = useState(false);
+  const [showOrgDialog, setShowOrgDialog] = useState(false);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [showIssueDialog, setShowIssueDialog] = useState(false);
 
   useEffect(() => {
     loadStats();
+    checkUserOrg();
   }, [user]);
+
+  const checkUserOrg = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .single();
+
+    setHasOrg(!!data?.org_id);
+  };
 
   const loadStats = async () => {
     if (!user) return;
 
     try {
-      // Get projects count
       const { count: projectCount } = await supabase
         .from('projects')
         .select('*', { count: 'exact', head: true });
 
-      // Get active issues
       const { count: activeCount } = await supabase
         .from('issues')
         .select('*', { count: 'exact', head: true })
         .neq('status', 'done');
 
-      // Get completed issues
       const { count: doneCount } = await supabase
         .from('issues')
         .select('*', { count: 'exact', head: true })
@@ -105,14 +122,35 @@ export default function Dashboard() {
             <CardDescription>Common tasks to get you started</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button className="w-full justify-start" variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Issue
-            </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Project
-            </Button>
+            {!hasOrg ? (
+              <Button 
+                className="w-full justify-start" 
+                variant="outline"
+                onClick={() => setShowOrgDialog(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Organization
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => setShowIssueDialog(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Issue
+                </Button>
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => setShowProjectDialog(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Project
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -123,8 +161,12 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-start gap-3">
-              <div className="rounded-full bg-primary/10 p-1">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
+              <div className={`rounded-full p-1 ${hasOrg ? 'bg-primary/10' : 'bg-muted'}`}>
+                {hasOrg ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium">Create your first organization</p>
@@ -132,8 +174,12 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="rounded-full bg-muted p-1">
-                <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
+              <div className={`rounded-full p-1 ${stats.projects > 0 ? 'bg-primary/10' : 'bg-muted'}`}>
+                {stats.projects > 0 ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium">Create your first project</p>
@@ -141,8 +187,12 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="rounded-full bg-muted p-1">
-                <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
+              <div className={`rounded-full p-1 ${stats.activeIssues > 0 ? 'bg-primary/10' : 'bg-muted'}`}>
+                {stats.activeIssues > 0 ? (
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium">Add your first task</p>
@@ -152,6 +202,25 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <CreateOrgDialog 
+        open={showOrgDialog} 
+        onOpenChange={setShowOrgDialog}
+        onSuccess={() => {
+          loadStats();
+          checkUserOrg();
+        }}
+      />
+      <CreateProjectDialog 
+        open={showProjectDialog} 
+        onOpenChange={setShowProjectDialog}
+        onSuccess={loadStats}
+      />
+      <CreateIssueDialog 
+        open={showIssueDialog} 
+        onOpenChange={setShowIssueDialog}
+        onSuccess={loadStats}
+      />
     </div>
   );
 }
