@@ -86,8 +86,11 @@ export function CreateIssueDialog({
 
     setLoading(true);
     try {
-      const issueKey = await generateIssueKey(projectId);
-      if (!issueKey) throw new Error('Failed to generate issue key');
+      // Use the atomic issue key generation function
+      const { data: issueKey, error: keyError } = await supabase
+        .rpc('generate_issue_key', { p_project_id: projectId });
+
+      if (keyError || !issueKey) throw new Error('Failed to generate issue key');
 
       const { error } = await supabase
         .from('issues')

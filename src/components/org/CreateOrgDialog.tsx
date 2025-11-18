@@ -65,16 +65,26 @@ export function CreateOrgDialog({ open, onOpenChange, onSuccess }: CreateOrgDial
 
       if (orgError) throw orgError;
 
-      // Update user's profile with org_id and role
+      // Update user's profile with org_id
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           org_id: org.id,
-          role: 'owner',
         })
         .eq('id', user.id);
 
       if (profileError) throw profileError;
+
+      // Create user_role entry
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: user.id,
+          org_id: org.id,
+          role: 'owner',
+        });
+
+      if (roleError) throw roleError;
 
       toast({
         title: 'Success',
